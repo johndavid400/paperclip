@@ -92,16 +92,29 @@ module Paperclip
         end
       end
 
+      def fog_content_disposition(style = default_style)
+        if @options.has_key?(:fog_content_disposition)
+          if @options[:fog_content_disposition].respond_to?(:has_key?) && @options[:fog_content_disposition].has_key?(style)
+            @options[:fog_content_disposition][style]
+          else
+            @options[:fog_content_disposition]
+          end
+        else
+          true
+        end
+      end
+
       def flush_writes
         for style, file in @queued_for_write do
           log("saving #{path(style)}")
           retried = false
           begin
             directory.files.create(fog_file.merge(
-              :body         => file,
-              :key          => path(style),
-              :public       => fog_public(style),
-              :content_type => file.content_type
+              :body                => file,
+              :key                 => path(style),
+              :public              => fog_public(style),
+              :content_disposition => fog_content_disposition(style),
+              :content_type        => file.content_type
             ))
           rescue Excon::Errors::NotFound
             raise if retried
